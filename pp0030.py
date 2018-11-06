@@ -10,6 +10,11 @@ import dpkt
 # this flag is used to print and handle debug messages
 debug = True
 
+def packet_is_ip(eth):
+	if isinstance(eth.data, dpkt.ip.IP):
+		return True
+	return False
+
 def parse_pcap(pcap_filename):
 	if not os.path.isfile(pcap_filename):
 		print('File {} doesnot exist. Please provide the proper file name'.format(pcap_filename))
@@ -18,7 +23,7 @@ def parse_pcap(pcap_filename):
 	if debug:
 		print('File {} is found.'.format(pcap_filename))
 
-	f = open(pcap_filename,encoding="latin-1")
+	f = open(pcap_filename)
 	if not f:
 		print('Unable to open file: {}'.format(pcap_filename))
 		exit()
@@ -29,6 +34,7 @@ def parse_pcap(pcap_filename):
 	for ts,buf in pcap:
 		# get the ethernet object from the buffer
 		eth = dpkt.ethernet.Ethernet(buf)
+
 		# we wont actually worry about packets other than TCP and UDP so
 		if packet_is_ip(eth):
 			# if IP, grab the IP from the ethernet packet
@@ -53,7 +59,7 @@ def parse_pcap(pcap_filename):
 if __name__=='__main__':
 
 	# grab the file name
-	file_name = 'test.pcap'	#just a default name of file
+	file_name = 'udp.pcap'	#just a default name of file
 	no_arguments = len(sys.argv)
 
 
