@@ -8,7 +8,7 @@ import os.path
 import dpkt
 
 # this flag is used to print and handle debug messages
-debug = True
+debug = False
 
 def packet_is_ip(eth):
 	if isinstance(eth.data, dpkt.ip.IP):
@@ -16,6 +16,13 @@ def packet_is_ip(eth):
 	return False
 
 def parse_pcap(pcap_filename):
+
+	xmas_scan = 0
+	udp_scan = 0
+	null_scan = 0
+	half_scan = 0
+	connect_scan = 0
+
 	if not os.path.isfile(pcap_filename):
 		print('File {} doesnot exist. Please provide the proper file name'.format(pcap_filename))
 		exit()
@@ -44,22 +51,46 @@ def parse_pcap(pcap_filename):
 				# the packet is TCP, so work accordingly
 				if debug:
 					print('Packet found: TCP')
-				# if ()
+				# check for the flags set in the packet
+				if my_ip_data.flags==0:
+					if debug:
+						print('Found NULL packet')
+					null_scan+=1
+				else:
+					fin_flag = (my_ip_data.flags&dpkt.tcp.TH_FIN)!=0
+					syn_flag = (my_ip_data.flags&dpkt.tcp.TH_SYN)!=0
+					rst_flag = (my_ip_data.flags&dpkt.tcp.TH_RST)!=0
+					psh_flag = (my_ip_data.flags&dpkt.tcp.TH_PUSH)!=0
+					ack_flag = (my_ip_data.flags&dpkt.tcp.TH_ACK)!=0
+					urg_flag = (my_ip_data.flags&dpkt.tcp.TH_URG)!=0
+					ece_flag = (my_ip_data.flags&dpkt.tcp.TH_ECE)!=0
+					cwr_flag = (my_ip_data.flags&dpkt.tcp.TH_CWR)!=0
+
+				# check the xmas scan
+				if fin_flag and urg_flag and psh_flag:
+					xmas_scan += 1
 
 			elif type(my_ip_data)==dpkt.udp.UDP:
 				# the packet is UDP, so work accordingly
 				if debug:
 					print('Packet found: UDP')
+				udp_scan += 1
 		else:
 			if debug:
 				print('Packet is neither TCP nor UDP')
+
+	print('Number of NULL Scan = {}'.format(null_scan))
+	print('Number of XMAS Scan = {}'.format(xmas_scan))
+	print('Number of UDP Scan = {}'.format(udp_scan))
+	print('Number of Half Scan = {}'.format(half_scan))
+	print('Number of Connect Scan = {}'.format(connect_scan))
 
 		
 
 if __name__=='__main__':
 
 	# grab the file name
-	file_name = 'udp.pcap'	#just a default name of file
+	file_name = 'test.pcap'	#just a default name of file
 	no_arguments = len(sys.argv)
 
 
